@@ -1,0 +1,39 @@
+setwd("...") # Set working directory
+mydata <- read.csv("....csv", header = TRUE, fileEncoding = "GB18030")
+plot(density(mydata$...)) # An irregular target density distribution function based on the input data
+
+library(mclust) # Load mclust package
+
+fit <- Mclust(mydata$...) # Use a mixed normal distribution to fit the target density distribution
+fit$parameters$mean # Obtain the average of the components of the mixed distribution
+fit$parameters$variance$sigmasq # Get the covariance parameters for each component of the mixed distribution
+sqrt(fit$parameters$variance$sigmasq)
+fit$parameters$pro # Get the weights of the components of the mixed distribution
+
+target_density <- function(x) {
+  dnorm(x,
+        mean = c(fit$parameters$mean),
+        sd = c(sqrt(fit$parameters$variance$sigmasq)) %*% c(fit$parameters$pro)
+} # Re-define the target probability density function based on the parameters of the mixed distribution
+
+theta <- 1  # Set the initial theta value
+sigma <- 0.5  # Set the initial step size
+
+# The Metropolis-Hastings sampling procedure is performed in the following
+n_samples <- 10000  # Set sample size. Here, 10000 values were sampled.
+samples <- numeric(n_samples)  # Creates a vector consisting of ‘n_samples’ numeric elements
+for (i in 1:n_samples) {
+  theta_proposed <- rnorm(1, mean = theta, sd = sigma) # Generate candidate values
+  numerator <- target_density(theta_proposed)
+  denominator <- target_density(theta)
+  acceptance_prob <- min(1, numerator / denominator) # Calculate the acceptance rate
+  if (runif(1) < acceptance_prob) {
+    theta <- theta_proposed
+  } # # Sampling according to the acceptance rate
+  samples[i] <- theta # Store the sampling values
+}
+
+# View the sampling values and save them
+plot(samples)
+write.csv(samples, "....csv")
+plot(density(samples))
